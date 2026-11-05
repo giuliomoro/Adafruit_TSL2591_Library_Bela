@@ -45,6 +45,7 @@
 */
 /**************************************************************************/
 
+#include <Arduino.h>
 #include "Adafruit_TSL2591.h"
 #include <stdlib.h>
 

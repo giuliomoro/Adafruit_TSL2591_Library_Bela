@@ -1,3 +1,9 @@
+#include <Bela.h>
+#include <Adafruit_TSL2591.h>
+
+Adafruit_TSL2591 temp;
+
+
 /* TSL2591 Digital Light Sensor */
 /* Dynamic Range: 600M:1 */
 /* Maximum Lux: 88K */
@@ -31,7 +37,7 @@ void displaySensorDetails(void)
   Serial.print  (F("Unique ID:    ")); Serial.println(sensor.sensor_id);
   Serial.print  (F("Max Value:    ")); Serial.print(sensor.max_value); Serial.println(F(" lux"));
   Serial.print  (F("Min Value:    ")); Serial.print(sensor.min_value); Serial.println(F(" lux"));
-  Serial.print  (F("Resolution:   ")); Serial.print(sensor.resolution, 4); Serial.println(F(" lux"));  
+  Serial.print  (F("Resolution:   ")); Serial.print(sensor.resolution); Serial.println(F(" lux"));  
   Serial.println(F("------------------------------------"));
   Serial.println(F(""));
   delay(500);
@@ -78,7 +84,7 @@ void configureSensor(void)
       break;
   }
   Serial.print  (F("Timing:       "));
-  Serial.print((tsl.getTiming() + 1) * 100, DEC); 
+  Serial.print((tsl.getTiming() + 1) * 100); 
   Serial.println(F(" ms"));
   Serial.println(F("------------------------------------"));
   Serial.println(F(""));
@@ -132,7 +138,7 @@ void simpleRead(void)
 
   Serial.print(F("[ ")); Serial.print(millis()); Serial.print(F(" ms ] "));
   Serial.print(F("Luminosity: "));
-  Serial.println(x, DEC);
+  Serial.println(x);
 }
 
 /**************************************************************************/
@@ -152,7 +158,7 @@ void advancedRead(void)
   Serial.print(F("IR: ")); Serial.print(ir);  Serial.print(F("  "));
   Serial.print(F("Full: ")); Serial.print(full); Serial.print(F("  "));
   Serial.print(F("Visible: ")); Serial.print(full - ir); Serial.print(F("  "));
-  Serial.print(F("Lux: ")); Serial.println(tsl.calculateLux(full, ir), 6);
+  Serial.print(F("Lux: ")); Serial.println(tsl.calculateLux(full, ir));
 }
 
 /**************************************************************************/
@@ -183,18 +189,45 @@ void unifiedSensorAPIRead(void)
   }
 }
 
+void loop(void*) {
+	while(!Bela_stopRequested())
+	{
+		//simpleRead(); 
+		advancedRead();
+		// unifiedSensorAPIRead();
+		delay(500);
+	}
+}
 
-/**************************************************************************/
-/*
-    Arduino loop function, called once 'setup' is complete (your own code
-    should go here)
-*/
-/**************************************************************************/
-void loop(void) 
-{ 
-  //simpleRead(); 
-  advancedRead();
-  // unifiedSensorAPIRead();
-  
-  delay(500);
+bool setup(BelaContext* context, void*)
+{
+	Serial.println(F("Starting Adafruit TSL2591 Test!"));
+	
+	if (tsl.begin()) 
+	{
+		Serial.println(F("Found a TSL2591 sensor"));
+	} 
+	else 
+	{
+		Serial.println(F("No sensor found ... check your wiring?"));
+		return false;
+	}
+	
+	/* Display some basic information on this sensor */
+	displaySensorDetails();
+	
+	/* Configure the sensor */
+	configureSensor();
+	// Now we're ready to get readings ... move on to loop()!
+
+	Bela_runAuxiliaryTask(loop);
+	return true;
+}
+
+void render(BelaContext* context, void*)
+{
+}
+
+void cleanup(BelaContext* context, void*)
+{
 }
