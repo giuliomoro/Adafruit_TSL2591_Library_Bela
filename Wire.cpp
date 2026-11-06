@@ -28,6 +28,7 @@ void arduino::MbedI2C::begin() {
 	end();
 	master = new I2c;
 	master->initI2C_RW(bus, 1, -1);
+	printf("i2c begin (%d)\n", bus);
 }
 
 #ifdef DEVICE_I2CSLAVE
@@ -79,7 +80,9 @@ uint8_t arduino::MbedI2C::endTransmission(bool stopBit) {
 		return ret;
 	}
 	#endif
-	if (master->writeRaw(_address, (i2c_char_t *) txBuffer, usedTxBuffer, !stopBit) == usedTxBuffer) return 0;
+	int ret = master->writeRaw(_address, (i2c_char_t *) txBuffer, usedTxBuffer, !stopBit);
+	if(ret == usedTxBuffer) return 0;
+	printf("endtransmission ret %d exp %d\n", ret, usedTxBuffer);
 	return 2;
 }
 

@@ -69,11 +69,12 @@ bool Adafruit_I2CDevice::detected(void) {
   // A basic scanner, see if it ACK's
   _wire->beginTransmission(_addr);
   printf("Address %#x ", _addr);
-  if (_wire->endTransmission() == 0) {
+  int ret = _wire->endTransmission();
+  if (ret == 0) {
     printf(" Detected");
     return true;
   }
-  printf(" Not detected\n");
+  printf(" Not detected: %d\n", ret);
   return false;
 }
 
