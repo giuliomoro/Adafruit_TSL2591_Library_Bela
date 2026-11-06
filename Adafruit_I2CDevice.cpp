@@ -62,24 +62,18 @@ void Adafruit_I2CDevice::end(void) {
 bool Adafruit_I2CDevice::detected(void) {
   // Init I2C if not done yet
   if (!_begun && !begin()) {
+  	fprintf(stderr, "_begun begin\n");
     return false;
   }
 
   // A basic scanner, see if it ACK's
   _wire->beginTransmission(_addr);
-#ifdef DEBUG_SERIAL
-  DEBUG_SERIAL.print(F("Address 0x"));
-  DEBUG_SERIAL.print(_addr);
-#endif
+  printf("Address %#x ", _addr);
   if (_wire->endTransmission() == 0) {
-#ifdef DEBUG_SERIAL
-    DEBUG_SERIAL.println(F(" Detected"));
-#endif
+    printf(" Detected");
     return true;
   }
-#ifdef DEBUG_SERIAL
-  DEBUG_SERIAL.println(F(" Not detected"));
-#endif
+  printf(" Not detected\n");
   return false;
 }
 
