@@ -83,8 +83,10 @@ boolean Adafruit_TSL2591::begin(TwoWire *theWire, uint8_t addr) {
   if (i2c_dev)
     delete i2c_dev;
   i2c_dev = new Adafruit_I2CDevice(addr, theWire);
-  if (!i2c_dev->begin())
+  if (!i2c_dev->begin()) {
+    printf("i2c_dev begin error\n");
     return false;
+  }
 
   /*
   for (uint8_t i=0; i<0x20; i++)
@@ -97,6 +99,7 @@ boolean Adafruit_TSL2591::begin(TwoWire *theWire, uint8_t addr) {
 
   uint8_t id = read8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_ID);
   if (id != 0x50) {
+    printf("id is %#x\n", id);
     return false;
   }
   // Serial.println("Found Adafruit_TSL2591");
