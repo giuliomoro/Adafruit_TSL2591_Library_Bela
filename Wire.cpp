@@ -77,7 +77,7 @@ uint8_t arduino::MbedI2C::endTransmission(bool stopBit) {
 		// we are scanning, return 0 if the addresed device responds with an ACK
 		char buf[1];
 		int ret = master->readRaw(_address, (i2c_char_t*)buf, 1, !stopBit);
-		return ret;
+		return !(ret == 1);
 	}
 	#endif
 	int ret = master->writeRaw(_address, (i2c_char_t *) txBuffer, usedTxBuffer, !stopBit);
