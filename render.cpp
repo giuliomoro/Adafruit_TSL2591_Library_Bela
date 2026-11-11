@@ -1,8 +1,5 @@
 #include <Bela.h>
-#include <Adafruit_TSL2591.h>
-
-Adafruit_TSL2591 temp;
-
+#include <libraries/BelaLibpd/BelaLibpd.h>
 
 /* TSL2591 Digital Light Sensor */
 /* Dynamic Range: 600M:1 */
@@ -20,6 +17,8 @@ Adafruit_TSL2591 temp;
 // connect GROUND to common ground
 
 Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591); // pass in a number for the sensor identifier (for your use later)
+unsigned int kSleepTimeMs = 100;
+float gLuminosity;
 
 /**************************************************************************/
 /*
@@ -40,7 +39,6 @@ void displaySensorDetails(void)
   Serial.print  (F("Resolution:   ")); Serial.print(sensor.resolution); Serial.println(F(" lux"));  
   Serial.println(F("------------------------------------"));
   Serial.println(F(""));
-  delay(500);
 }
 
 /**************************************************************************/
@@ -90,36 +88,6 @@ void configureSensor(void)
   Serial.println(F(""));
 }
 
-
-/**************************************************************************/
-/*
-    Program entry point for the Arduino sketch
-*/
-/**************************************************************************/
-void setup(void) 
-{
-  Serial.begin(9600);
-  
-  Serial.println(F("Starting Adafruit TSL2591 Test!"));
-  
-  if (tsl.begin()) 
-  {
-    Serial.println(F("Found a TSL2591 sensor"));
-  } 
-  else 
-  {
-    Serial.println(F("No sensor found ... check your wiring?"));
-    while (1);
-  }
-    
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
-  
-  /* Configure the sensor */
-  configureSensor();
-
-  // Now we're ready to get readings ... move on to loop()!
-}
 
 /**************************************************************************/
 /*
@@ -193,13 +161,14 @@ void loop(void*) {
 	while(!Bela_stopRequested())
 	{
 		//simpleRead(); 
-		advancedRead();
+		// advancedRead();
 		// unifiedSensorAPIRead();
-		delay(500);
+		gLuminosity = tsl.getFullLuminosity();
+		usleep(kSleepTimeMs * 1000);
 	}
 }
 
-bool setup(BelaContext* context, void*)
+bool setup(BelaContext* context, void* userData)
 {
 	Serial.println(F("Starting Adafruit TSL2591 Test!"));
 	
@@ -221,13 +190,34 @@ bool setup(BelaContext* context, void*)
 	// Now we're ready to get readings ... move on to loop()!
 
 	Bela_runAuxiliaryTask(loop);
-	return true;
+    return BelaLibpd_setup(context, userData, {});
 }
 
-void render(BelaContext* context, void*)
+void render(BelaContext* context, void* userData)
 {
+// send each channel approximately once per read
+	static unsigned int periodSamples = context->audioSampleRate * kSleepTimeMs / 1000000.f;
+	static uint64_t lastSent = context->audioFramesElapsed;
+	if(context->audioFramesElapsed - lastSent > periodSamples)
+	{
+		lastSent = context->audioFramesElapsed;
+		uint32_t lum = gLuminosity;
+		uint16_t ir, full;
+		ir = lum >> 16;
+		full = lum & 0xFFFF;
+		uint16_t visible = full - ir;
+		float lux = tsl.calculateLux(full, ir);
+		libpd_start_message(4);
+		libpd_add_float(ir);
+		libpd_add_float(full);
+		libpd_add_float(visible);
+		libpd_add_float(lux);
+		libpd_finish_message("bela_tsl2591", "list");
+	}
+    BelaLibpd_render(context, userData);
 }
 
-void cleanup(BelaContext* context, void*)
+void cleanup(BelaContext* context, void* userData)
 {
+	BelaLibpd_cleanup(context, userData);
 }

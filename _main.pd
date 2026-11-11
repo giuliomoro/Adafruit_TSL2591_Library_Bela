@@ -1,0 +1,7 @@
+#N canvas 337 69 614 353 12;
+#X obj 67 169 print;
+#X text 65 95 This project includes a custom cpp file that reads the;
+#X obj 67 145 r bela_bela_tsl2591;
+#X text 65 109 from bela_tsl2591 \, cooks the data and passes it to Pd;
+#X text 123 172 list ir full visible lux;
+#X connect 2 0 0 0;
